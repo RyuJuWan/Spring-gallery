@@ -1,5 +1,8 @@
 package org.africalib.galley.backend.service;
-public interface JwtService {
-    public String getToken(String key, Object value);
 
+import io.jsonwebtoken.Claims;
+
+public interface JwtService {
+    String getToken(String key, Object value);
+    Claims getClaims(String token);
 }

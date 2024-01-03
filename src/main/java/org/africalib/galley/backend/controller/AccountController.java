@@ -1,17 +1,15 @@
 package org.africalib.galley.backend.controller;
 
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.africalib.galley.backend.entity.Member;
 import org.africalib.galley.backend.repository.MemberRepository;
 import org.africalib.galley.backend.service.JwtService;
-import org.africalib.galley.backend.service.JwtServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -25,6 +23,9 @@ public class AccountController {
     @Autowired
     MemberRepository memberRepository;
 
+    @Autowired
+    JwtService jwtService;
+
     @PostMapping("/api/account/login")
     public ResponseEntity login(@RequestBody Map<String, String> params,
                                 HttpServletResponse res) {
@@ -33,7 +34,7 @@ public class AccountController {
 
         if (member != null) {
             //System.out.println("member : "+ member.getEmail()+"/"+member.getPassword());
-            JwtService jwtService = new JwtServiceImpl();
+            //JwtService jwtService = new JwtServiceImpl();
 
             int id = member.getId();
 
@@ -54,6 +55,18 @@ public class AccountController {
             }
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+    }
+
+    @GetMapping("/api/account/check")
+    public ResponseEntity check(@CookieValue(value = "token", required = false) String token){
+        Claims claims = jwtService.getClaims(token);
+
+        if(claims != null){
+            int id = Integer.parseInt(claims.get("id").toString());
+            return new ResponseEntity<>(id, HttpStatus.OK);
+        }
+
+        return new ResponseEntity<>(null, HttpStatus.OK);
     }
 
 

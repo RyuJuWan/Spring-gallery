@@ -1,8 +1,7 @@
 package org.africalib.galley.backend.service;
 
-import io.jsonwebtoken.JwtBuilder;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
+import org.springframework.stereotype.Service;
 
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
@@ -11,7 +10,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-
+@Service("jwtService")
 public class JwtServiceImpl implements JwtService {
 
     private String secretKey = "fsdjlfshroe###Fjsdlfhsjfdsnflsdjfjildfddjlkfjslfjsdlfjlsdjflsdjflsdfjlfjsdlfjsdkl";
@@ -35,5 +34,23 @@ public class JwtServiceImpl implements JwtService {
                 .signWith(signKey, SignatureAlgorithm.HS256);
 
         return builder.compact();
+    }
+
+    @Override
+    public Claims getClaims(String token) {
+        if(token != null && !"".equals(token)){
+            try{
+                byte[] secretByteKey = DatatypeConverter.parseBase64Binary(secretKey);
+                Key signKey = new SecretKeySpec(secretByteKey, SignatureAlgorithm.HS256.getJcaName());
+
+                Claims  claims = Jwts.parserBuilder().setSigningKey(signKey).build().parseClaimsJws(token).getBody();
+                return claims;
+            }catch (ExpiredJwtException e){
+                //만료됨
+            }catch (JwtException e){
+                //유효하지 않음
+            }
+        }
+        return null;
     }
 }
