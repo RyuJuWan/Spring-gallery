@@ -1,7 +1,9 @@
 package org.africalib.galley.backend.controller;
 
+import jakarta.transaction.Transactional;
 import org.africalib.galley.backend.dto.OrderDto;
 import org.africalib.galley.backend.entity.Order;
+import org.africalib.galley.backend.repository.CartRepository;
 import org.africalib.galley.backend.repository.OrderRepository;
 import org.africalib.galley.backend.service.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +22,9 @@ public class OrderController {
     JwtService jwtService;
 
     @Autowired
+    CartRepository cartRepository;
+
+    @Autowired
     OrderRepository orderRepository;
 
     @GetMapping("/api/orders")
@@ -28,11 +33,12 @@ public class OrderController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
 
-        List<Order> orders = orderRepository.findAll();
+        List<Order> orders = orderRepository.findByMemberIdOrderByIdDesc(jwtService.getId(token));
 
         return new ResponseEntity<>(orders, HttpStatus.OK);
     }
 
+    @Transactional
     @PostMapping("/api/orders")
     public ResponseEntity pushOrder(@RequestBody OrderDto dto,
                                     @CookieValue(value = "token", required = false) String token){
@@ -40,8 +46,10 @@ public class OrderController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
 
+        int memberId = jwtService.getId(token);
+
         Order newOrder = new Order();
-        newOrder.setMemberId(jwtService.getId(token));
+        newOrder.setMemberId(memberId);
         newOrder.setName(dto.getName());
         newOrder.setAddress(dto.getAddress());
         newOrder.setPayment(dto.getPayment());
@@ -49,6 +57,8 @@ public class OrderController {
         newOrder.setItems(dto.getItems());
 
         orderRepository.save(newOrder);
+        cartRepository.deleteByMemberId(memberId);
+
 
         return new ResponseEntity<>(HttpStatus.OK);
     }
