@@ -59,6 +59,8 @@ public class OrderController {
         orderRepository.save(newOrder);
         cartRepository.deleteByMemberId(memberId);
 
+        int i = 0;
+
 
         return new ResponseEntity<>(HttpStatus.OK);
     }
